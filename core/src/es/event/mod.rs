@@ -297,7 +297,7 @@ where
 impl<Ev: Versioned> VersionedOrRaw for Ev {}
 
 pub trait VersionedNames {
-    type Iterator;
+    type Iterator: Iterator<Item = (Name, Version)>;
 
     fn versioned_names() -> Self::Iterator;
 }
