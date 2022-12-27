@@ -299,7 +299,7 @@ impl<Ev: Versioned> VersionedOrRaw for Ev {}
 pub trait VersionedNames {
     type Iterator;
 
-    fn versioned_names(&self) -> Self::Iterator;
+    fn versioned_names() -> Self::Iterator;
 }
 
 #[cfg(feature = "codegen")]
@@ -399,7 +399,7 @@ pub mod codegen {
     impl<T: Events> VersionedNames for T {
         type Iterator = VersionedNamesIterator;
 
-        fn versioned_names(&self) -> Self::Iterator {
+        fn versioned_names() -> Self::Iterator {
             VersionedNamesIterator::new(T::EVENTS)
         }
     }
