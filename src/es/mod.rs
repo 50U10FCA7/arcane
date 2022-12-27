@@ -9,5 +9,5 @@ pub use self::event::{
     Adapter as EventAdapter, Event, Initialized as EventInitialized,
     Name as EventName, Raw as RawEvent, Sourced as EventSourced,
     Sourcing as EventSourcing, Version as EventVersion,
-    Versioned as VersionedEvent,
+    Versioned as VersionedEvent, VersionedNames as VersionedEventNames,
 };
