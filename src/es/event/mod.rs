@@ -5,7 +5,7 @@ pub mod adapter;
 #[doc(inline)]
 pub use arcana_core::es::event::{
     Adapter, Event, Initial, Initialized, Name, Raw, Sourced, Sourcing,
-    Version, Versioned, VersionedOrRaw,
+    Version, Versioned, VersionedOrRaw, VersionedNames,
 };
 
 #[cfg(feature = "derive")]

@@ -296,13 +296,21 @@ where
 
 impl<Ev: Versioned> VersionedOrRaw for Ev {}
 
+pub trait VersionedNames {
+    type Iterator;
+
+    fn versioned_names(&self) -> Self::Iterator;
+}
+
 #[cfg(feature = "codegen")]
 pub mod codegen {
     //! [`Event`] machinery aiding codegen.
     //!
     //! [`Event`]: super::Event
 
-    use super::Raw;
+    use core::slice;
+
+    use super::{Name, Raw, Version, VersionedNames};
 
     pub use futures;
     pub use ref_cast;
@@ -357,6 +365,43 @@ pub mod codegen {
 
     impl<Ev: ?Sized, Data> Events for Raw<Ev, Data> {
         const EVENTS: &'static [(&'static str, &'static str, u16)] = &[];
+    }
+
+    #[derive(Clone, Copy, Debug)]
+    pub struct VersionedNamesIterator(
+        slice::Iter<'static, (&'static str, &'static str, u16)>,
+    );
+
+    impl VersionedNamesIterator {
+        fn new(events: &'static [(&'static str, &'static str, u16)]) -> Self {
+            Self(events.iter())
+        }
+    }
+
+    impl Iterator for VersionedNamesIterator {
+        type Item = (Name, Version);
+
+        fn next(&mut self) -> Option<Self::Item> {
+            self.0.next().map(|(_, name, ver)| {
+                (
+                    *name,
+                    // SAFETY: Safe, because `VersionedNamesIterator` can be
+                    //         constructed only inside of this module.
+                    #[allow(unsafe_code)]
+                    unsafe {
+                        Version::new_unchecked(*ver)
+                    },
+                )
+            })
+        }
+    }
+
+    impl<T: Events> VersionedNames for T {
+        type Iterator = VersionedNamesIterator;
+
+        fn versioned_names(&self) -> Self::Iterator {
+            VersionedNamesIterator::new(T::EVENTS)
+        }
     }
 
     /// Checks in compile time whether all the given combinations of
