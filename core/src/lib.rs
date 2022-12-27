@@ -1,6 +1,5 @@
 #![doc = include_str!("../README.md")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![feature(generic_associated_types)]
 #![deny(
     macro_use_extern_crate,
     nonstandard_style,

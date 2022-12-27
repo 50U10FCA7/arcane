@@ -324,50 +324,38 @@ impl Definition {
         //       https://github.com/rust-lang/rust/issues/57775
         let ty_subst_gens = Self::substitute_generics_trivially(&self.generics);
 
+        // TODO: Remove this once generics are supported in const contexts.
+        let const_phantom_generics =
+            self.generics.params.iter().filter_map(|p| {
+                match p {
+                    syn::GenericParam::Type(ty) => {
+                        let ident = &ty.ident;
+                        Some(quote! { type #ident = (); })
+                    }
+                    syn::GenericParam::Lifetime(_)
+                    | syn::GenericParam::Const(_) => None,
+                }
+            });
+
         let glue = quote! { ::arcana::es::event::codegen };
         quote! {
             #[automatically_derived]
             #[doc(hidden)]
-            impl #impl_gens #glue::Versioned for #ty #ty_gens
-                 #where_clause
-            {
-                #[doc(hidden)]
-                const COUNT: usize =
-                    #( <#var_ty as #glue::Versioned>::COUNT )+*;
-            }
-
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl #ty #ty_gens {
-                #[doc(hidden)]
-                pub const fn __arcana_events() -> [
-                    (&'static str, &'static str, u16);
-                    <Self as #glue::Versioned>::COUNT
-                ] {
-                    let mut res = [
-                        ("", "", 0); <Self as #glue::Versioned>::COUNT
-                    ];
-
-                    let mut i = 0;
-                    #({
-                        let events = <#var_ty>::__arcana_events();
-                        let mut j = 0;
-                        while j < events.len() {
-                            res[i] = events[j];
-                            j += 1;
-                            i += 1;
-                        }
-                    })*
-
-                    res
-                }
+            impl #impl_gens #glue ::Events for #ty #ty_gens #where_clause {
+                const EVENTS: &'static [(&'static str, &'static str, u16)] = {
+                    #( #const_phantom_generics )*
+                    #glue ::const_concat_slices!(
+                        (&'static str, &'static str, u16),
+                        #( <#var_ty as #glue ::Events>::EVENTS ),*
+                    )
+                };
             }
 
             #[automatically_derived]
             #[doc(hidden)]
             const _: () = ::std::assert!(
                 !#glue::has_different_types_with_same_name_and_ver(
-                    #ty::#ty_subst_gens::__arcana_events(),
+                    <#ty::#ty_subst_gens as #glue ::Events>::EVENTS,
                 ),
                 "having different `Event` types with the same name and version \
                  inside a single enum is forbidden",

@@ -307,28 +307,56 @@ pub mod codegen {
     pub use futures;
     pub use ref_cast;
 
-    impl<Ev: ?Sized, Data> Raw<Ev, Data> {
-        #[doc(hidden)]
-        #[must_use]
-        pub const fn __arcana_events() -> [(&'static str, &'static str, u16); 0]
-        {
-            []
-        }
+    /// Concatenates slices at compile time.
+    #[macro_export]
+    macro_rules! const_concat_slices {
+        ($ty:ty, $a:expr) => {$a};
+        ($ty:ty, $a:expr, $b:expr $(,)*) => {{
+            const A: &[$ty] = $a;
+            const B: &[$ty] = $b;
+            const __LEN: usize = A.len() + B.len();
+            const __CONCATENATED: &[$ty; __LEN] = &{
+                let mut out: [$ty; __LEN] = if __LEN == 0 {
+                    unsafe {
+                        ::core::mem::transmute(
+                            [0u8; ::core::mem::size_of::<$ty>() * __LEN],
+                        )
+                    }
+                } else if A.len() == 0 {
+                    [B[0]; { A.len() + B.len() }]
+                } else {
+                    [A[0]; { A.len() + B.len() }]
+                };
+                let mut i = 0;
+                while i < A.len() {
+                    out[i] = A[i];
+                    i += 1;
+                }
+                i = 0;
+                while i < B.len() {
+                    out[i + A.len()] = B[i];
+                    i += 1;
+                }
+                out
+            };
+
+            __CONCATENATED
+        }};
+        ($ty:ty, $a:expr, $b:expr, $($c:expr),+ $(,)*) => {
+            $crate::const_concat_slices!(
+                $ty,
+                $a,
+                $crate::const_concat_slices!($ty, $b, $($c),+)
+            )
+        };
     }
 
-    /// Tracking of [`VersionedEvent`]s number.
-    ///
-    /// [`VersionedEvent`]: super::Versioned
-    pub trait Versioned {
-        /// Number of [`VersionedEvent`]s in this [`Event`].
-        ///
-        /// [`Event`]: super::Event
-        /// [`VersionedEvent`]: super::Versioned
-        const COUNT: usize;
+    pub trait Events {
+        const EVENTS: &'static [(&'static str, &'static str, u16)];
     }
 
-    impl<Ev: ?Sized, Data> Versioned for Raw<Ev, Data> {
-        const COUNT: usize = 0;
+    impl<Ev: ?Sized, Data> Events for Raw<Ev, Data> {
+        const EVENTS: &'static [(&'static str, &'static str, u16)] = &[];
     }
 
     /// Checks in compile time whether all the given combinations of
@@ -354,8 +382,8 @@ pub mod codegen {
     /// [`event::Version`]: super::Version
     /// [`event::Versioned`]: super::Versioned
     #[must_use]
-    pub const fn has_different_types_with_same_name_and_ver<const N: usize>(
-        events: [(&str, &str, u16); N],
+    pub const fn has_different_types_with_same_name_and_ver(
+        events: &[(&str, &str, u16)],
     ) -> bool {
         let mut outer = 0;
         while outer < events.len() {

@@ -131,33 +131,20 @@ impl Definition {
         quote! {
             #[automatically_derived]
             #[doc(hidden)]
-            impl #impl_gens ::arcana::es::event::codegen::Versioned for
-                 #ty #ty_gens #where_clause
+            impl #impl_gens ::arcana::es::event::codegen::Events
+                for #ty #ty_gens #where_clause
             {
-                #[doc(hidden)]
-                const COUNT: usize = 1;
-            }
-
-            #[automatically_derived]
-            #[doc(hidden)]
-            impl #impl_gens #ty #ty_gens #where_clause {
-                #[doc(hidden)]
-                #[inline]
-                pub const fn __arcana_events() ->
-                    [(&'static str, &'static str, u16); 1]
-                {
-                    [(
-                        ::std::concat!(
-                            ::std::file!(),
-                            "_",
-                            ::std::line!(),
-                            "_",
-                            ::std::column!(),
-                        ),
-                        <Self as ::arcana::es::event::Versioned>::NAME,
-                        <Self as ::arcana::es::event::Versioned>::VERSION.get(),
-                    )]
-                }
+                const EVENTS: &'static [(&'static str, &'static str, u16)] = &[(
+                    ::std::concat!(
+                        ::std::file!(),
+                        "_",
+                        ::std::line!(),
+                        "_",
+                        ::std::column!(),
+                    ),
+                    <Self as ::arcana::es::event::Versioned>::NAME,
+                    <Self as ::arcana::es::event::Versioned>::VERSION.get(),
+                )];
             }
         }
     }

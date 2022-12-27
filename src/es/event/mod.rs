@@ -11,6 +11,16 @@ pub use arcana_core::es::event::{
 #[cfg(feature = "derive")]
 #[doc(inline)]
 pub use arcana_codegen::es::event::{Adapter, Event, Versioned};
+
 #[cfg(feature = "derive")]
-#[doc(inline)]
-pub use arcana_core::es::event::codegen;
+pub mod codegen {
+    //! [`Event`] machinery aiding codegen.
+    //!
+    //! [`Event`]: super::Event
+
+    #[doc(inline)]
+    pub use arcana_core::es::event::codegen::*;
+
+    #[doc(inline)]
+    pub use arcana_core::const_concat_slices;
+}
