@@ -367,7 +367,7 @@ pub mod codegen {
         const EVENTS: &'static [(&'static str, &'static str, u16)] = &[];
     }
 
-    #[derive(Clone, Copy, Debug)]
+    #[derive(Clone, Debug)]
     pub struct VersionedNamesIterator(
         slice::Iter<'static, (&'static str, &'static str, u16)>,
     );
